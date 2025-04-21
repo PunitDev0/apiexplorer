@@ -3,6 +3,7 @@
 import { createContext, useState, useEffect } from "react";
 import { getCurrentUser, loginUser } from "@/services/auth.service";
 import { useRouter } from "next/navigation";
+import { BASE_URL } from "@/lib/base_Url";
 
 export const AuthContext = createContext();
 
@@ -44,7 +45,7 @@ export const AuthProvider = ({ children }) => {
   // Logout function
   const logout = async () => {
     try {
-      await fetch("http://localhost:3001/auth/logout", {
+      await fetch(`{${BASE_URL}/auth/logout}`, {
         method: "POST",
         credentials: "include",
       });
