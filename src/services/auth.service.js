@@ -1,12 +1,11 @@
-// frontend/services/authService.js
 import axios from 'axios';
 import { BASE_URL } from '@/lib/base_Url';
 
-// Only log BASE_URL in development mode
-if (process.env.NODE_ENVI === 'development') {
+if (process.env.NODE_ENV === 'development') {
   console.log('API BASE_URL:', BASE_URL);
 }
 
+// Common headers
 const headers = {
   'Content-Type': 'application/json',
 };
@@ -16,6 +15,7 @@ export const registerUser = async (userData) => {
   try {
     const response = await axios.post(`${BASE_URL}/auth/register`, userData, {
       headers,
+      withCredentials: true,
     });
     return response.data;
   } catch (error) {
@@ -29,7 +29,7 @@ export const loginUser = async (credentials) => {
   try {
     const response = await axios.post(`${BASE_URL}/auth/login`, credentials, {
       headers,
-      withCredentials: true, // Needed for cookie-based sessions
+      withCredentials: true,
     });
     return response.data;
   } catch (error) {
@@ -38,11 +38,11 @@ export const loginUser = async (credentials) => {
   }
 };
 
-// Get the currently logged-in user
+// Get current user
 export const getCurrentUser = async () => {
   try {
     const response = await axios.get(`${BASE_URL}/auth/me`, {
-      withCredentials: true, // Needed for cookie-based sessions
+      withCredentials: true,
     });
     return response.data;
   } catch (error) {
