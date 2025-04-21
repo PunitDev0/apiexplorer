@@ -32,6 +32,7 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter(); // Initialize router
    console.log(BASE_URL);
+   console.log(process.env.NEXT_PUBLIC_NODE_ENVI);
    
   const {
     register,
