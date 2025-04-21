@@ -42,7 +42,6 @@ export const loginUser = async (credentials) => {
 export const getCurrentUser = async () => {
   try {
     const response = await axios.get(`${BASE_URL}/auth/me`, {
-      headers,
       withCredentials: true, // Needed for cookie-based sessions
     });
     return response.data;
