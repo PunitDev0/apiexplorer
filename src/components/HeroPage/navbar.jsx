@@ -51,7 +51,7 @@ export function Navbar({ toggleSidebar, toggleTheme, isDarkMode }) {
   };
 
   return (
-    <header className="flex h-14 items-center border-b border-gray-800 px-4 bg-black sticky top-0 z-[1000] shadow-md">
+    <header className="flex h-14 items-center border-b border-gray-800 px-4 bg-black sticky top-0 shadow-md">
       <Link href={'/'} className="flex items-center gap-3">
         <Logo className="h-8 w-8 md:h-10 md:w-10" /> {/* Responsive size */}
         <p

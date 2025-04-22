@@ -90,21 +90,21 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiasedV font-mono`}
       >
+        <ToastProvider>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >
+              <Toaster />
           <RequestProvider>
             <AuthProvider>
-            <ToastProvider>
               {children}
-              <Toaster />
-            </ToastProvider>
               </AuthProvider>
           </RequestProvider>
         </ThemeProvider>
+            </ToastProvider>
       </body>
     </html>
   );
