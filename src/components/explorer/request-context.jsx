@@ -3,6 +3,7 @@
 import * as React from "react";
 import axios from "axios";
 import { addRequestInCollection, } from "@/services/collection.service";
+import { BASE_URL } from "@/lib/base_Url";
 
 const RequestContext = React.createContext(undefined);
 
@@ -484,7 +485,7 @@ export function RequestProvider({ children, workspaceId }) {
       setIsLoading((prev) => ({ ...prev, [requestId]: true }));
 
       try {
-        const response = await axios.post("http://localhost:3001/api/request", {
+        const response = await axios.post(`${BASE_URL}/request`, {
           method: request.method,
           url: request.url,
           headers: request.headers,
