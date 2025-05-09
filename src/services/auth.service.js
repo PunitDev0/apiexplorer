@@ -49,7 +49,6 @@ export const loginUser = async (credentials) => {
 export const getCurrentUser = async () => {
   try {
     const response = await axios.get(`${BASE_URL}/auth/me`, {
-      headers,
       withCredentials: true,
     });
     return response.data;

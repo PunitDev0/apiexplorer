@@ -1,7 +1,8 @@
 // frontend/services/workspace.service.js
 import axios from "axios";
 
-const API_URL = "http://localhost:3001/api/workspaces";
+import { BASE_URL } from "@/lib/base_Url";
+
 
 export const createWorkspace = async (name, ownerId) => {
   try {
@@ -26,7 +27,7 @@ export const createWorkspace = async (name, ownerId) => {
 
 export const Workspaces = async () => {
   try {
-    const response = await axios.get(API_URL, {
+    const response = await axios.get(`${BASE_URL}/workspaces`, {
       headers: {
         "Content-Type": "application/json",
       },
@@ -40,7 +41,7 @@ export const Workspaces = async () => {
 
 export const WorkspacesbyId = async (id) => {
   try {
-    const response = await axios.get(`${API_URL}/${id}`, {
+    const response = await axios.get(`${BASE_URL}/workspaces/${id}`, {
       headers: {
         "Content-Type": "application/json",
       },
