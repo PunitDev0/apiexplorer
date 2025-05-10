@@ -8,7 +8,6 @@ import React, { useContext, useEffect, useState } from 'react'
 
 function Page() {
   const { user, loading, logout } = useContext(AuthContext);
-  console.log(user);
   
   return (
     <div className='mx-auto '>

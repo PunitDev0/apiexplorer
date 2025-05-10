@@ -35,6 +35,10 @@ export const loginUser = async (credentials) => {
       headers,
       withCredentials: true,
     });
+    const { token } = response.data; // Assuming backend returns a token
+    if (token) {
+      localStorage.setItem("authToken", token); // Store token in localStorage
+    }
     return response.data;
   } catch (error) {
     const errorMessage = error.response?.data?.message || 'Login failed';
@@ -45,17 +49,63 @@ export const loginUser = async (credentials) => {
   }
 };
 
+
+// Google Login Service
+export const googleLogin = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL}/auth/google`);
+    const { token } = response.data; // Assuming backend returns a token
+    if (token) {
+      localStorage.setItem("authToken", token); // Store token in localStorage
+    }
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || "Google login failed";
+    if (!isProduction) {
+      console.error("Google login failed:", errorMessage);
+    }
+    throw new Error(errorMessage);
+  }
+};
+
+// GitHub Login Service
+export const githubLogin = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL}/auth/github`);
+    const { token } = response.data; // Assuming backend returns a token
+    if (token) {
+      localStorage.setItem("authToken", token); // Store token in localStorage
+    }
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || "GitHub login failed";
+    if (!isProduction) {
+      console.error("GitHub login failed:", errorMessage);
+    }
+    throw new Error(errorMessage);
+  }
+};
+
 // Get current user
 export const getCurrentUser = async () => {
   try {
+    const token = localStorage.getItem("authToken"); // Retrieve token from localStorage
+    // if (!token) {
+    //   throw new Error("No authentication token found");
+    // }
+
     const response = await axios.get(`${BASE_URL}/auth/me`, {
-      withCredentials: true,
+      headers: {
+        Authorization: `Bearer ${token}`, // Include token in Authorization header
+        "Content-Type": "application/json",
+      },
+      withCredentials: true, // Keep for session-based auth if needed
     });
     return response.data;
   } catch (error) {
-    const errorMessage = error.response?.data?.message || 'Failed to fetch user data';
+    const errorMessage = error.response?.data?.message || "Failed to fetch user data";
     if (!isProduction) {
-      console.error('Get user failed:', errorMessage);
+      console.error("Get user failed:", errorMessage);
     }
     throw new Error(errorMessage);
   }
