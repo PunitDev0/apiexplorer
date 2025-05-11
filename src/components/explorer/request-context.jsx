@@ -4,7 +4,7 @@ import * as React from "react";
 import axios from "axios";
 import { addRequestInCollection, } from "@/services/collection.service";
 import { BASE_URL } from "@/lib/base_Url";
-
+const PROXY_URL = 'http://localhost:9999/proxy';
 const RequestContext = React.createContext(undefined);
 
 export const parseCurlCommand = (curlString) => {
@@ -485,16 +485,34 @@ export function RequestProvider({ children, workspaceId }) {
       setIsLoading((prev) => ({ ...prev, [requestId]: true }));
 
       try {
-        const response = await axios.post(`${BASE_URL}/request`, {
-          method: request.method,
-          url: request.url,
-          headers: request.headers,
-          params: request.params,
-          body: request.body,
-          bodyType: request.bodyType,
-          authType: request.authType,
-          authData: request.authData,
-        });
+        const isLocalhost = request.url.startsWith('http://localhost');
+        let response;
+
+        if (isLocalhost) {
+          // Hit CLI proxy for localhost URLs
+          response = await axios.post(PROXY_URL, {
+            method: request.method,
+            url: request.url,
+            headers: request.headers,
+            params: request.params,
+            body: request.body,
+            bodyType: request.bodyType,
+            authType: request.authType,
+            authData: request.authData,
+          });
+        } else {
+          // Hit backend for non-localhost URLs
+          response = await axios.post(`${BASE_URL}/request`, {
+            method: request.method,
+            url: request.url,
+            headers: request.headers,
+            params: request.params,
+            body: request.body,
+            bodyType: request.bodyType,
+            authType: request.authType,
+            authData: request.authData,
+          });
+        }
 
         setResponses((prev) => ({
           ...prev,
@@ -520,7 +538,7 @@ export function RequestProvider({ children, workspaceId }) {
           statusText: "Error",
           responseTime: 0,
           headers: {},
-          body: error.message || "Request failed",
+          body: error.message || "Request failed. For localhost URLs, ensure `npx api-explorer-cli` is running.",
           size: 0,
         };
         setResponses((prev) => ({
@@ -533,6 +551,8 @@ export function RequestProvider({ children, workspaceId }) {
     },
     [requests, addToHistory]
   );
+
+
 
   const exportCollections = React.useCallback(
     (collectionId) => {
