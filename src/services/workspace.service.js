@@ -7,7 +7,7 @@ import { BASE_URL } from "@/lib/base_Url";
 export const createWorkspace = async (name, ownerId) => {
   try {
     const response = await axios.post(
-      API_URL,
+      `${BASE_URL}/workspaces`,
       {
         name,
         ownerId,
@@ -19,6 +19,8 @@ export const createWorkspace = async (name, ownerId) => {
         withCredentials: true,
       }
     );
+    console.log(response);
+    
     return response.data;
   } catch (error) {
     throw error.response?.data || { message: "Failed to create workspace" };

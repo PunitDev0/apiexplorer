@@ -15,7 +15,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { AuthContext } from "@/context/AuthContext";
-import { createWorkspace, Workspaces, WorkspacesbyId } from "@/services/workspace.service";
+import { createWorkspace, Workspaces } from "@/services/workspace.service";
 import {
   Dialog,
   DialogTrigger,
@@ -56,8 +56,6 @@ export default function Home() {
     },
   });
 
-  // console.log(user);
-  
   useEffect(() => {
     if (!authLoading && !user) {
       router.push("/login");
@@ -68,16 +66,21 @@ export default function Home() {
       setIsLoading(true);
       try {
         const response = await Workspaces();
-        const formattedWorkspaces = response.data.map((workspace) => ({
-          name: workspace.name || "Unnamed",
-          lastUsed: workspace.updatedAt
-            ? new Date(workspace.updatedAt).toLocaleString()
-            : "N/A",
-          requestCount: workspace.requestCount || 0,
-          owner: workspace.owner?.name || "Unknown",
-          _id: workspace._id,
-        }));
-        setWorkspaces(formattedWorkspaces);
+        // Assuming response is { success: true, data: [...] }
+        if (response.success) {
+          const formattedWorkspaces = response.data.map((workspace) => ({
+            name: workspace.name || "Unnamed",
+            lastUsed: workspace.createdAt
+              ? new Date(workspace.createdAt).toLocaleString()
+              : "N/A",
+            requestCount: workspace.requestCount || 0,
+            owner: workspace.owner ? workspace.owner.name : "Unknown",
+            _id: workspace._id,
+          }));
+          setWorkspaces(formattedWorkspaces);
+        } else {
+          throw new Error("Failed to fetch workspaces");
+        }
       } catch (error) {
         addToast({
           variant: "error",
@@ -92,44 +95,32 @@ export default function Home() {
     if (user) {
       fetchWorkspaces();
     }
-  }, [ authLoading, router]);
-
-  const handleOpenWorkspace = async (id) => {
-    try {
-      const workspaceData = await WorkspacesbyId(id);
-      router.push(`/workspace/${id}`);
-    } catch (error) {
-      addToast({
-        variant: "error",
-        title: "Error",
-        description: "Failed to open workspace",
-      });
-    }
-  };
+  }, [user, authLoading, router, addToast]);
 
   const onSubmit = async (data) => {
     setIsLoading(true);
-    console.log(data);
-    
     try {
       const response = await createWorkspace(data.name, user._id);
-      console.log(response);
-      
-      const newWorkspace = {
-        name: response.data.name,
-        lastUsed: new Date(response.data.createdAt).toLocaleString(),
-        requestCount: 0,
-        owner: user.name || "Unknown",
-        _id: response.data._id,
-      };
-      setWorkspaces((prev) => [...prev, newWorkspace]);
-      addToast({
-        variant: "success",
-        title: "Success",
-        description: "Workspace created successfully",
-      });
-      setIsDialogOpen(false);
-      reset();
+      if (response.success) {
+        const newWorkspace = {
+          name: response.data.name,
+          lastUsed: new Date(response.data.createdAt).toLocaleString(),
+          requestCount: response.data.requestCount || 0,
+          owner: user.name || "Unknown",
+          _id: response.data._id,
+        };
+        // Append new workspace to existing list
+        setWorkspaces((prev) => [...prev, newWorkspace]);
+        addToast({
+          variant: "success",
+          title: "Success",
+          description: "Workspace created successfully",
+        });
+        setIsDialogOpen(false);
+        reset();
+      } else {
+        throw new Error("Failed to create workspace");
+      }
     } catch (error) {
       addToast({
         variant: "error",
@@ -247,7 +238,6 @@ export default function Home() {
                 <TableHead className="text-primary">Owner</TableHead>
                 <TableHead className="text-primary">Last Used</TableHead>
                 <TableHead className="text-primary">Requests</TableHead>
-                <TableHead className="text-primary">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -261,19 +251,11 @@ export default function Home() {
                     <TableCell>{workspace.owner}</TableCell>
                     <TableCell>{workspace.lastUsed}</TableCell>
                     <TableCell>{workspace.requestCount}</TableCell>
-                    <TableCell>
-                      <Button
-                        onClick={() => handleOpenWorkspace(workspace._id)}
-                        className="bg-accent text-white px-4 py-2 rounded hover:bg-accent/80 transition duration-200"
-                      >
-                        Open
-                      </Button>
-                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-accent">
+                  <TableCell colSpan={4} className="text-center text-accent">
                     No workspaces found.
                   </TableCell>
                 </TableRow>
