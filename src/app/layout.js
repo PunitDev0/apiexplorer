@@ -49,10 +49,7 @@ export default function RootLayout({ children }) {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="robots" content="index, follow" />
         <meta name="googlebot" content="index, follow" />
-        <meta
-          name="google-site-verification"
-          content="mqAHT7zvLB6rcRZwZJQIMDhsXtQVVQ-ISGX0RcqJ1-g"
-        />
+        <meta name="google-site-verification" content="mqAHT7zvLB6rcRZwZJQIMDhsXtQVVQ-ISGX0RcqJ1-g" />
         <meta
           property="og:title"
           content="API Explorer - Simplify API Development"
