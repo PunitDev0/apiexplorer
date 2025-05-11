@@ -2,8 +2,6 @@ import axios from "axios";
 
 import { BASE_URL } from "@/lib/base_Url";
 
-const API_URL = "http://localhost:3001/api/collections";
-const REQUEST_API_URL = "http://localhost:3001/api/requests";
 
 export const createCollection = async (name, workspaceId, userId) => {
   try {
@@ -79,7 +77,7 @@ export const deleteCollection = async (id) => {
 export const addRequestInCollection = async (collectionId, request) => {
   try {
     const response = await axios.post(
-      `${API_URL}/add-request`,
+      `${BASE_URL}/collections/add-request`,
       { collectionId, request },
       {
         headers: {

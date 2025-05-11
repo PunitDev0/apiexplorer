@@ -29,6 +29,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import Link from "next/link";
 
 const workspaceSchema = z.object({
   name: z.string().min(1, "Workspace name is required").max(100, "Name too long"),
@@ -66,7 +67,6 @@ export default function Home() {
       setIsLoading(true);
       try {
         const response = await Workspaces();
-        // Assuming response is { success: true, data: [...] }
         if (response.success) {
           const formattedWorkspaces = response.data.map((workspace) => ({
             name: workspace.name || "Unnamed",
@@ -109,7 +109,6 @@ export default function Home() {
           owner: user.name || "Unknown",
           _id: response.data._id,
         };
-        // Append new workspace to existing list
         setWorkspaces((prev) => [...prev, newWorkspace]);
         addToast({
           variant: "success",
@@ -247,7 +246,14 @@ export default function Home() {
                     key={workspace._id}
                     className="hover:bg-black/50 transition duration-200"
                   >
-                    <TableCell className="font-medium">{workspace.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <Link
+                        href={`/workspace/${workspace._id}`}
+                        className="text-accent hover:underline hover:text-accent/80 transition duration-200"
+                      >
+                        {workspace.name}
+                      </Link>
+                    </TableCell>
                     <TableCell>{workspace.owner}</TableCell>
                     <TableCell>{workspace.lastUsed}</TableCell>
                     <TableCell>{workspace.requestCount}</TableCell>
