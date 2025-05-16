@@ -137,7 +137,7 @@ export function LoginForm() {
               </div>
             </div>
             <div className="gap-4 w-full flex justify-center">
-            <Link href={`${BASE_URL}/auth/google`}>
+            {/* <Link href={`${BASE_URL}/auth/google`}>
                 <Button
                   variant="outline"
                   type="button"
@@ -164,8 +164,8 @@ export function LoginForm() {
                   </svg>
                   Google
                 </Button>
-              </Link>
-              <Link href={`${BASE_URL}/auth/github`}>
+              </Link> */}
+              {/* <Link href={`${BASE_URL}/auth/github`}>
                 <Button
                   variant="outline"
                   type="button"
@@ -174,7 +174,7 @@ export function LoginForm() {
                   <Github className="mr-2 h-4 w-4" />
                   GitHub
                 </Button>
-              </Link>
+              </Link> */}
             </div>
           </div>
         </CardContent>

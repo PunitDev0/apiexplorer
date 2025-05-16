@@ -162,7 +162,7 @@ export function SignupForm() {
                 <span className="bg-zinc-950 px-2 text-zinc-400">Or continue with</span>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            {/* <div className="grid grid-cols-2 gap-4">
               <Button
                 variant="outline"
                 type="button"
@@ -197,7 +197,7 @@ export function SignupForm() {
                 <Github className="mr-2 h-4 w-4" />
                 GitHub
               </Button>
-            </div>
+            </div> */}
           </div>
         </CardContent>
       </form>
