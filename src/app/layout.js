@@ -8,6 +8,7 @@ import { RequestProvider } from "@/components/explorer/request-context";
 import { ToastProvider } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/context/AuthContext";
+import { EnvironmentProvider } from "@/context/environment-context";
 
 // Font setup
 const geistSans = Geist({
@@ -88,20 +89,22 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiasedV font-mono`}
       >
         <ToastProvider>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
-              <Toaster />
-          <RequestProvider>
-            <AuthProvider>
-              {children}
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <Toaster />
+            <RequestProvider>
+              <AuthProvider>
+                <EnvironmentProvider>
+                  {children}
+                </EnvironmentProvider>
               </AuthProvider>
-          </RequestProvider>
-        </ThemeProvider>
-            </ToastProvider>
+            </RequestProvider>
+          </ThemeProvider>
+        </ToastProvider>
       </body>
     </html>
   );

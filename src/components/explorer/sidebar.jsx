@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo, useContext, useEffect } from "react";
+import { useState, useCallback, useMemo, useContext, useEffect, useRef } from "react";
 import {
   FileJson,
   History,
@@ -53,11 +53,177 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { createCollection, updateCollection, deleteCollection, getCollections } from "@/services/collection.service";
+import { useEnvironment } from "@/context/environment-context";
+
+// Schema for environment creation
+const environmentSchema = z.object({
+  name: z.string().min(1, "Environment name is required").max(100, "Name too long"),
+});
 
 const collectionSchema = z.object({
   name: z.string().min(1, "Collection name is required").max(100, "Name too long"),
 });
 
+// Dialog for creating environments
+const EnvironmentDialog = ({ isOpen, onOpenChange, onSubmit, isLoading }) => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm({
+    resolver: zodResolver(environmentSchema),
+    defaultValues: { name: "" },
+  });
+
+  const handleCancel = () => {
+    reset();
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-background text-foreground border">
+        <DialogHeader>
+          <DialogTitle>Create New Environment</DialogTitle>
+          <DialogDescription>Enter a name for your new environment.</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className="py-4">
+            <Input
+              type="text"
+              placeholder="Environment Name"
+              {...register("name")}
+              className="w-full bg-background text-foreground border"
+            />
+            {errors.name && (
+              <p className="text-sm text-destructive mt-1">{errors.name.message}</p>
+            )}
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button
+                type="button"
+                variant="outline"
+                className="bg-background text-foreground border hover:bg-accent"
+                onClick={handleCancel}
+              >
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-primary/50"
+            >
+              {isLoading ? "Creating..." : "Create"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// Dialog for managing environment variables
+const EnvironmentVariablesDialog = ({ isOpen, onOpenChange, environment, onSave, isLoading }) => {
+  const { register, handleSubmit, formState: { errors }, reset, setValue, getValues } = useForm({
+    defaultValues: {
+      variables: environment?.variables?.length > 0 ? environment.variables : [{ key: "", value: "" }],
+    },
+  });
+
+  useEffect(() => {
+    reset({
+      variables: environment?.variables?.length > 0 ? environment.variables : [{ key: "", value: "" }],
+    });
+  }, [environment, reset]);
+
+  const addVariable = () => {
+    const currentVars = getValues("variables");
+    setValue("variables", [...currentVars, { key: "", value: "" }]);
+  };
+
+  const removeVariable = (index) => {
+    const currentVars = getValues("variables");
+    if (currentVars.length > 1) {
+      setValue("variables", currentVars.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleCancel = () => {
+    reset();
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-background text-foreground border">
+        <DialogHeader>
+          <DialogTitle>Manage {environment?.name} Variables</DialogTitle>
+          <DialogDescription>Add or edit environment variables.</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit(onSave)}>
+          <div className="py-4 space-y-2">
+            {getValues("variables").map((_, index) => (
+              <div key={index} className="flex gap-2 items-center">
+                <Input
+                  placeholder="Key"
+                  {...register(`variables.${index}.key`)}
+                  className="w-1/2 bg-background text-foreground border"
+                />
+                <Input
+                  placeholder="Value"
+                  {...register(`variables.${index}.value`)}
+                  className="w-1/2 bg-background text-foreground border"
+                />
+                {getValues("variables").length > 1 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeVariable(index)}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                )}
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addVariable}
+              className="mt-2"
+            >
+              Add Variable
+            </Button>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button
+                type="button"
+                variant="outline"
+                className="bg-background text-foreground border hover:bg-accent"
+                onClick={handleCancel}
+              >
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-primary/50"
+            >
+              {isLoading ? "Saving..." : "Save"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// CollectionDialog
 const CollectionDialog = ({ isOpen, onOpenChange, onSubmit, isLoading }) => {
   const {
     register,
@@ -118,6 +284,7 @@ const CollectionDialog = ({ isOpen, onOpenChange, onSubmit, isLoading }) => {
   );
 };
 
+// ExportCollectionDialog
 const ExportCollectionDialog = ({ isOpen, onOpenChange, collections, onExport, isLoading }) => {
   const { register, handleSubmit, setValue, watch } = useForm({
     defaultValues: { collectionId: "" },
@@ -204,6 +371,7 @@ export function ExplorerSidebar({ isCollapsed = false, sidebarWidth }) {
   const { theme } = useTheme();
   const router = useRouter();
   const { addToast } = useToast();
+  const { environments, addEnvironment, updateEnvironmentVariables, deleteEnvironment, loading: envLoading } = useEnvironment();
 
   const [activeTab, setActiveTab] = useState("collections");
   const [expandedFolders, setExpandedFolders] = useState({});
@@ -212,11 +380,15 @@ export function ExplorerSidebar({ isCollapsed = false, sidebarWidth }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isCollectionDialogOpen, setIsCollectionDialogOpen] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [isEnvironmentDialogOpen, setIsEnvironmentDialogOpen] = useState(false);
+  const [isEnvVarsDialogOpen, setIsEnvVarsDialogOpen] = useState(false);
+  const [selectedEnvironment, setSelectedEnvironment] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const fileInputRef = useState(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const fetchCollections = async () => {
+      if (!user || !workspaceId) return;
       try {
         setIsLoading(true);
         const response = await getCollections(workspaceId);
@@ -237,9 +409,7 @@ export function ExplorerSidebar({ isCollapsed = false, sidebarWidth }) {
       }
     };
 
-    if (workspaceId && user) {
-      fetchCollections();
-    }
+    fetchCollections();
   }, [workspaceId, user, setCollections, addToast]);
 
   const toggleFolder = useCallback((folderId) => {
@@ -309,7 +479,7 @@ export function ExplorerSidebar({ isCollapsed = false, sidebarWidth }) {
       return;
     }
     setIsCollectionDialogOpen(true);
-  }, [user, addToast, router]);
+  }, [user, router, addToast]);
 
   const handleCreateCollection = useCallback(
     async (data) => {
@@ -425,7 +595,7 @@ export function ExplorerSidebar({ isCollapsed = false, sidebarWidth }) {
         addToast({
           variant: "success",
           title: "Success",
-          description: result.message,
+          description: result.message || "Collection imported successfully",
         });
       } catch (error) {
         addToast({
@@ -438,6 +608,56 @@ export function ExplorerSidebar({ isCollapsed = false, sidebarWidth }) {
       }
     },
     [importCollections, addToast]
+  );
+
+  const handleCreateEnvironment = useCallback(
+    async (data) => {
+      setIsLoading(true);
+      try {
+        await addEnvironment(data.name);
+        addToast({
+          variant: "success",
+          title: "Success",
+          description: "Environment created successfully",
+        });
+        setIsEnvironmentDialogOpen(false);
+      } catch (error) {
+        addToast({
+          variant: "error",
+          title: "Error",
+          description: error.message || "Failed to create environment",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [addEnvironment, addToast]
+  );
+
+  const handleSaveEnvironmentVariables = useCallback(
+    async (data) => {
+      setIsLoading(true);
+      console.log(selectedEnvironment);
+      
+      try {
+        await updateEnvironmentVariables(selectedEnvironment._id, data.variables);
+        addToast({
+          variant: "success",
+          title: "Success",
+          description: "Environment variables updated",
+        });
+        setIsEnvVarsDialogOpen(false);
+      } catch (error) {
+        addToast({
+          variant: "error",
+          title: "Error",
+          description: error.message || "Failed to update variables",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [selectedEnvironment, updateEnvironmentVariables, addToast]
   );
 
   const filteredCollections = useMemo(() => {
@@ -588,6 +808,20 @@ export function ExplorerSidebar({ isCollapsed = false, sidebarWidth }) {
             onExport={handleExportCollections}
             isLoading={isLoading}
           />
+          <EnvironmentDialog
+            isOpen={isEnvironmentDialogOpen}
+            onOpenChange={setIsEnvironmentDialogOpen}
+            onSubmit={handleCreateEnvironment}
+            isLoading={isLoading || envLoading}
+          />
+          <EnvironmentVariablesDialog
+            isOpen={isEnvVarsDialogOpen}
+            onOpenChange={setIsEnvVarsDialogOpen}
+            environment={selectedEnvironment}
+            onSave={handleSaveEnvironmentVariables}
+            isLoading={isLoading || envLoading}
+          />
+
           {activeTab === "history" && (
             <div className="space-y-2">
               {Object.entries(groupedHistory).length > 0 ? (
@@ -635,6 +869,7 @@ export function ExplorerSidebar({ isCollapsed = false, sidebarWidth }) {
               <Button
                 onClick={handleAddCollection}
                 className="w-full mb-2 bg-primary hover:bg-primary/90 text-primary-foreground"
+                disabled={isLoading}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 New Collection
@@ -681,6 +916,7 @@ export function ExplorerSidebar({ isCollapsed = false, sidebarWidth }) {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleEditCollection(collection.id, collection.name)}
+                            disabled={isLoading}
                           >
                             <Edit2 className="h-4 w-4 text-muted-foreground" />
                           </Button>
@@ -689,6 +925,7 @@ export function ExplorerSidebar({ isCollapsed = false, sidebarWidth }) {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDeleteCollection(collection.id)}
+                          disabled={isLoading}
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
@@ -737,16 +974,51 @@ export function ExplorerSidebar({ isCollapsed = false, sidebarWidth }) {
           )}
 
           {activeTab === "environments" && (
-            <div className="text-sm text-center text-muted-foreground p-4">
-              <Button variant="outline" className="w-full mb-2">
-                Add Environment
+            <div className="space-y-2">
+              <Button
+                onClick={() => setIsEnvironmentDialogOpen(true)}
+                className="w-full mb-2 bg-primary hover:bg-primary/90 text-primary-foreground"
+                disabled={isLoading || envLoading}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                New Environment
               </Button>
-              <p>Manage your environments here.</p>
+              {envLoading ? (
+                <p className="text-sm text-center text-muted-foreground">Loading environments...</p>
+              ) : environments.length === 0 ? (
+                <p className="text-sm text-center text-muted-foreground">No environments available.</p>
+              ) : (
+                environments.map((env) => (
+                  <div key={env.id} className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setSelectedEnvironment(env);
+                        setIsEnvVarsDialogOpen(true);
+                      }}
+                      className="flex-1 flex items-center gap-2 p-2 hover:bg-accent rounded-md text-foreground"
+                    >
+                      <Globe className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">{env.name}</span>
+                    </button>
+                    {env.id !== "global" && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => deleteEnvironment(env.id)}
+                        disabled={isLoading || envLoading}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    )}
+                  </div>
+                ))
+              )}
             </div>
           )}
+
           {activeTab === "flows" && (
             <div className="text-sm text-center text-muted-foreground p-4">
-              <Button variant="outline" className="w-full mb-2">
+              <Button variant="outline" className="w-full mb-2" disabled={isLoading}>
                 Create Flow
               </Button>
               <p>Manage your workflows here.</p>
