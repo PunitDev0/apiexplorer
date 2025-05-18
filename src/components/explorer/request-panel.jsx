@@ -117,7 +117,7 @@ const VariablePreviewDialog = ({ isOpen, onOpenChange, preview }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-background text-foreground border border-gray-800">
+      <DialogContent className="bg-background text-foreground border border-gray-800  max-h-[70vh]">
         <DialogHeader>
           <DialogTitle>Variable Preview</DialogTitle>
           <DialogDescription>Preview of request with environment variables applied.</DialogDescription>
@@ -131,16 +131,17 @@ const VariablePreviewDialog = ({ isOpen, onOpenChange, preview }) => {
               className="bg-gray-900 text-gray-300 border-gray-800"
             />
           </div>
-          <div>
+          <div >
             <Label className="text-gray-300">Headers</Label>
             <Textarea
+            
               value={
                 preview.headers?.length
                   ? JSON.stringify(preview.headers, null, 2)
                   : "No headers provided"
               }
               readOnly
-              className="bg-gray-900 text-gray-300 border-gray-800 min-h-[100px] font-mono text-sm"
+              className="bg-gray-900 text-gray-300 border-gray-800 max-h-[40vh] font-mono text-sm"
             />
           </div>
           <div>
